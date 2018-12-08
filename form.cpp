@@ -197,8 +197,8 @@ void ImageView::mousePressEvent(QMouseEvent *event)
         }
     } else if (event->button() == Qt::RightButton) {
         mouse.isMoving = true;
-        mouse.pressX = event->x();
-        mouse.pressY = event->y();
+        mouse.pressX = event->x() - mouse.scrollX;
+        mouse.pressY = event->y() - mouse.scrollY;
     }
 
     Update();
