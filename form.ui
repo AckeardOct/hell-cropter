@@ -37,6 +37,12 @@
         <layout class="QVBoxLayout" name="verticalLayout_2">
          <item>
           <widget class="QDoubleSpinBox" name="sb_zoom">
+           <property name="minimum">
+            <double>0.000000000000000</double>
+           </property>
+           <property name="maximum">
+            <double>10000000000000000905969664.000000000000000</double>
+           </property>
            <property name="value">
             <double>1.000000000000000</double>
            </property>

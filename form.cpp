@@ -1,7 +1,6 @@
 #include "form.h"
 #include "ui_form.h"
 
-#include <QDebug>
 #include <QPainter>
 #include <QPaintEngine>
 #include <QMouseEvent>
@@ -90,15 +89,15 @@ void ImageView::SaveRects(QString dirPath)
     QDir dir(dirPath);
     QString fileName = dir.dirName();
     QString ext = QFileInfo(fileName).suffix();
-    fileName = fileName.left(fileName.size() - ext.size() - 1);
-    dirPath = dirPath.left(dirPath.size() - ext.size() - 1);
+
     if(ext.isEmpty())
         ext = "png";
-
-    qDebug() << fileName << ext << dirPath;
+    else {
+        fileName = fileName.left(fileName.size() - ext.size() - 1);
+        dirPath = dirPath.left(dirPath.size() - ext.size() - 1);
+    }
 
     if(!dir.exists() && !dir.mkdir(dirPath)) {
-        qDebug() << "Can't make dir";
         QMessageBox::warning(this, "ERROR", "Can't mkdir: " + dirPath);
         return;
     }
@@ -117,7 +116,6 @@ void ImageView::SaveRects(QString dirPath)
 
 void ImageView::UpdateOptions(CropOptions &options)
 {
-    qDebug() << __FUNCTION__;
     cropOptions = options;
     Update();
 }
@@ -147,10 +145,10 @@ void ImageView::ReCalc()
 
 void ImageView::paintEvent(QPaintEvent *e)
 {
+
     if(pixmap == NULL)
         return;
 
-    qDebug() << __FUNCTION__;
     const CropOptions& o = cropOptions;
     QPainter painter(this);
 
@@ -179,18 +177,14 @@ void ImageView::mousePressEvent(QMouseEvent *event)
     const CropOptions& o = cropOptions;
 
     const int mouseX = o.offsetX + event->x() / o.zoom;
-    const int mouseY = o.offsetY + event->y() / o.zoom;
-
-    qDebug() << event->x() << "  " << event->y() << mouseX << mouseY;
+    const int mouseY = o.offsetY + event->y() / o.zoom;    
 
     // find rect
     for(int i = 0; i < grid.size(); i++) {
         if(grid.at(i).contains(mouseX, mouseY, true)) {
-            if(selectedRects.contains(i)) {
-                qDebug() << "remove " << grid.at(i).x() << grid.at(i).y();
+            if(selectedRects.contains(i)) {                
                 selectedRects.remove(i);
             } else {
-                qDebug() << "add " << grid.at(i).x() << grid.at(i).y();
                 selectedRects.insert(i);
             }
         }
