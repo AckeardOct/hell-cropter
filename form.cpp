@@ -7,6 +7,7 @@
 #include <QDir>
 #include <QMessageBox>
 
+
 Form::Form(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::Form)
@@ -64,8 +65,8 @@ void Form::UpdateOptionsSlot()
 
 ImageView::ImageView(QWidget *parent) :
     QWidget(parent)
-{
-
+{    
+    setMouseTracking(false);
 }
 
 
@@ -145,12 +146,14 @@ void ImageView::ReCalc()
 
 void ImageView::paintEvent(QPaintEvent *e)
 {
-
     if(pixmap == NULL)
         return;
 
     const CropOptions& o = cropOptions;
     QPainter painter(this);
+
+    // scroll
+    painter.translate(QPoint(mouse.scrollX, mouse.scrollY));
 
     // draw image
     painter.drawPixmap(0, 0, pixWidth * o.zoom, pixHeight * o.zoom, *pixmap);
@@ -169,6 +172,8 @@ void ImageView::paintEvent(QPaintEvent *e)
                              , rect.width() * o.zoom, rect.height() * o.zoom );
         }
     }
+
+    this->scroll(100, 300);
 }
 
 
@@ -176,21 +181,48 @@ void ImageView::mousePressEvent(QMouseEvent *event)
 {
     const CropOptions& o = cropOptions;
 
-    const int mouseX = o.offsetX + event->x() / o.zoom;
-    const int mouseY = o.offsetY + event->y() / o.zoom;    
+    if (event->button() == Qt::LeftButton) {
+        const int mouseX = (o.offsetX - mouse.scrollX + event->x()) / o.zoom;
+        const int mouseY = (o.offsetY - mouse.scrollY + event->y()) / o.zoom;
 
-    // find rect
-    for(int i = 0; i < grid.size(); i++) {
-        if(grid.at(i).contains(mouseX, mouseY, true)) {
-            if(selectedRects.contains(i)) {                
-                selectedRects.remove(i);
-            } else {
-                selectedRects.insert(i);
+        // find rect
+        for(int i = 0; i < grid.size(); i++) {
+            if(grid.at(i).contains(mouseX, mouseY, true)) {
+                if(selectedRects.contains(i)) {
+                    selectedRects.remove(i);
+                } else {
+                    selectedRects.insert(i);
+                }
             }
         }
+    } else if (event->button() == Qt::RightButton) {
+        mouse.isMoving = true;
+        mouse.pressX = event->x();
+        mouse.pressY = event->y();
     }
 
     Update();
+}
+
+void ImageView::mouseReleaseEvent(QMouseEvent *event)
+{
+    if (event->button() == Qt::RightButton) {
+        mouse.isMoving = false;
+    }
+
+}
+
+
+void ImageView::mouseMoveEvent(QMouseEvent *event)
+{
+    const CropOptions& o = cropOptions;
+
+    if (!mouse.isMoving) {
+        return;
+    }
+
+    mouse.scrollX = event->x() - mouse.pressX;
+    mouse.scrollY = event->y() - mouse.pressY;
 }
 
 

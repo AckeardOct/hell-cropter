@@ -9,6 +9,7 @@ class Form;
 }
 
 class ImageView;
+class QScrollArea;
 
 class Form : public QWidget
 {
@@ -56,6 +57,8 @@ public:
 protected:
     virtual void paintEvent(QPaintEvent* e);
     virtual void mousePressEvent(QMouseEvent* event);
+    virtual void mouseReleaseEvent(QMouseEvent* event);
+    virtual void mouseMoveEvent(QMouseEvent *event);
 
 public slots:
     void SelectAllSlot();
@@ -68,6 +71,14 @@ private:
     CropOptions cropOptions;
     QVector<QRect> grid;
     QSet<int>   selectedRects;
+
+    struct {
+        bool isMoving { false };
+        int pressX  { 0 };
+        int pressY  { 0 };
+        int scrollX { 0 };
+        int scrollY { 0 };
+    } mouse;
 };
 
 #endif // FORM_H
