@@ -14,6 +14,9 @@ Form::Form(QWidget *parent) :
 {
     ui->setupUi(this);
     imageView = ui->imageView;
+    animView  = ui->animView;
+
+    imageView->SetAnimView(animView);
 
     connect(ui->sb_zoom, SIGNAL(valueChanged(double)), SLOT(UpdateOptionsSlot()));
     connect(ui->sb_rows, SIGNAL(valueChanged(int)), SLOT(UpdateOptionsSlot()));
@@ -21,7 +24,8 @@ Form::Form(QWidget *parent) :
     connect(ui->sb_offsetX, SIGNAL(valueChanged(int)), SLOT(UpdateOptionsSlot()));
     connect(ui->sb_offsetY, SIGNAL(valueChanged(int)), SLOT(UpdateOptionsSlot()));
 
-    connect(ui->pb_selectAll, SIGNAL(clicked(bool)), imageView, SLOT(SelectAllSlot()));
+    connect(ui->pb_selectAll, SIGNAL(clicked(bool)),  imageView, SLOT(SelectAllSlot()));
+    connect(ui->sb_animMs, SIGNAL(valueChanged(int)), animView , SLOT(UpdateTimeSlot(int)));
 }
 
 
@@ -63,10 +67,14 @@ void Form::UpdateOptionsSlot()
 
 // ==============================================
 
+
 ImageView::ImageView(QWidget *parent) :
     QWidget(parent)
-{    
-    setMouseTracking(false);
+{
+    QTimer* timer = new QTimer();
+    timer->start(1000);
+
+    connect(timer, SIGNAL(timeout()), SLOT(OnTimerSlot()));
 }
 
 
@@ -74,7 +82,6 @@ void ImageView::OpenImage(QString fileName)
 {
     imagePath = fileName;
 
-    delete pixmap;
     pixmap = new QPixmap(imagePath);
     pixWidth  = pixmap->width();
     pixHeight = pixmap->height();
@@ -135,12 +142,17 @@ void ImageView::ReCalc()
     grid.clear();
     const int widthDelta = pixWidth / o.cols;
     const int heightDelta = pixHeight / o.rows;
-    for(int i = 0; i < o.cols; i++) {
-        for(int j = 0; j < o.rows; j++) {
+
+    for(int j = 0; j < o.rows; j++) {
+        for(int i = 0; i < o.cols; i++) {
             grid.append(QRect(i * widthDelta + o.offsetX, j * heightDelta + o.offsetY, widthDelta, heightDelta));
         }
     }
+}
 
+void ImageView::SetAnimView(AnimView *anim)
+{
+    animView = anim;
 }
 
 
@@ -239,5 +251,60 @@ void ImageView::SelectAllSlot()
     Update();
 }
 
+void ImageView::OnTimerSlot()
+{
+    QVector<QPixmap> vec;
+
+    for(int i = 0; i < grid.size(); i++) {
+        if (!selectedRects.contains(i))
+            continue;
+        vec.append(pixmap->copy(grid.at(i)));
+    }
+
+    animView->UpdateFrames(vec);
+}
 
 
+// ============================================
+
+
+AnimView::AnimView(QWidget *parent) :
+    QWidget(parent)
+{
+    timer.start(50);
+
+    connect(&timer, SIGNAL(timeout()), SLOT(OnTimerSlot()));
+}
+
+void AnimView::UpdateFrames(QVector<QPixmap>& vec)
+{
+    frames = vec;
+}
+
+void AnimView::paintEvent(QPaintEvent *e)
+{
+    QPainter painter(this);
+
+    // draw image
+    painter.drawPixmap(0, 0, width(), height(), currentPix);
+}
+
+void AnimView::UpdateTimeSlot(int ms)
+{
+    timer.stop();
+    timer.start(ms);
+}
+
+void AnimView::OnTimerSlot()
+{
+    currentFrame++;
+    if(currentFrame > frames.size()) {
+        currentFrame = 0;
+    }
+
+    if (currentFrame < frames.size()) {
+        currentPix = frames.at(currentFrame);
+    }
+
+    repaint();
+}

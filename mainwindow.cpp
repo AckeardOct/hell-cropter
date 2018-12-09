@@ -21,8 +21,7 @@ MainWindow::~MainWindow()
 
 void MainWindow::OpenSlot()
 {
-    QString fileName = QFileDialog::getOpenFileName(this,
-        tr("Open Image"), "./", tr("Image Files (*.png *.jpg *.bmp)"));
+    QString fileName = QFileDialog::getOpenFileName();
 
     if(!fileName.isEmpty())
         form->OpenImage(fileName);
@@ -30,7 +29,7 @@ void MainWindow::OpenSlot()
 
 void MainWindow::SaveSlot()
 {
-    QString saveDir = QFileDialog::getSaveFileName(this);
+    QString saveDir = QFileDialog::getSaveFileName();
 
     if(!saveDir.isEmpty())
         form->SaveRects(saveDir);
